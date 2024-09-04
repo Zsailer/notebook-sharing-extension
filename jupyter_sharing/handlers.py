@@ -19,7 +19,7 @@ def request(model):
         # of depth to handle self.
         async def inner(self, *args, **kwargs):
             body = self.get_json_body()
-            self.request_model: model = model.parse_obj(body)
+            self.request_model = model.parse_obj(body)
             await method(self, *args, **kwargs)
             del self.request_model
 

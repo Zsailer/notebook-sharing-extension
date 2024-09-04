@@ -39,7 +39,7 @@
     },
     "dependencies": {
         "@jupyter_sharing/core": "*",
-        "@jupyterlab/application": "~4.1.0",
+        "@jupyterlab/application": "^4.1.0",
         "@lumino/coreutils": "^2.1.2",
         "react": "^18.2.0"
     },

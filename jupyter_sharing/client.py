@@ -26,6 +26,9 @@ from jupyter_server.auth.identity import User
 from traitlets import Integer
 
 
+
+
+
 PUBLISHING_CACHE_PATH = os.path.join(jupyter_runtime_dir(), "publishing")
 
 
@@ -42,10 +45,7 @@ class PublishedFileAuthorNotKnown(Exception):
 
 
 class PublishingServiceClientABC(abc.ABC):
-    @abc.abstractmethod
-    async def get_file_content(self, file_id: str) -> JupyterContentsModel:
-        ...
-
+    
     @abc.abstractmethod
     async def get_file(
         self, user: User, model: PublishedFileIdentifier
@@ -53,7 +53,7 @@ class PublishingServiceClientABC(abc.ABC):
         ...
 
     @abc.abstractmethod
-    async def get_files(
+    async def list_files(
         self, user: User, model: PublishedFileIdentifier
     ) -> PublishedFileMetadata:
         ...
@@ -63,7 +63,7 @@ class PublishingServiceClientABC(abc.ABC):
         ...
 
     @abc.abstractmethod
-    async def publish_file(
+    async def add_file(
         self, user: User, model: JupyterContentsModel
     ) -> PublishedFileMetadata:
         ...
@@ -75,12 +75,12 @@ class PublishingServiceClientABC(abc.ABC):
         ...
 
     @abc.abstractmethod
-    async def remove_file(self, user: User, model: PublishedFileIdentifier) -> None:
+    async def delete_file(self, user: User, model: PublishedFileIdentifier) -> None:
         ...
 
-    @abc.abstractmethod
-    async def preview_file(self, user: User, model: PublishedFileIdentifier) -> str:
-        ...
+    # @abc.abstractmethod
+    # async def preview_file(self, user: User, model: PublishedFileIdentifier) -> str:
+    #     ...
 
 
 class PublishingServiceClient(LoggingConfigurable):
@@ -149,34 +149,26 @@ class PublishingServiceClient(LoggingConfigurable):
             response = await self.http_client.fetch(request)
         return response
 
-    async def get_file_content(
-        self, user, model: PublishedFileIdentifier
-    ) -> JupyterContentsModel:
-        response = await self._request(
-            user, f"/sharing/{model.id}?content=true", method="GET"
-        )
-        obj = json.loads(response.body)
-        metadata: PublishedFileMetadata = PublishedFileMetadata.parse_obj(obj)
-        return metadata.contents
-
     async def get_file(
-        self, user: User, model: PublishedFileIdentifier, collaborators=True
+        self, 
+        user: User, 
+        model: PublishedFileIdentifier, 
+        contents=False, 
+        collaborators=False 
     ) -> PublishedFileMetadata:
-        url = f"/sharing/{model.id}"
-        if not collaborators:
-            url += "?collaborators=False"
+        url = f"/sharing/{model.id}?collaborators={collaborators}&contents={contents}"
         response = await self._request(user, url)
         obj = json.loads(response.body)
         model = PublishedFileMetadata.parse_obj(obj)
         return model
 
-    async def get_files(self, user: User, author="me"):
+    async def list_files(self, user: User, author="me"):
         """Get a list of all files published by the given author."""
         response = await self._request(user, f"/sharing?author={author}")
         obj = json.loads(response.body)
         return obj["files"]
 
-    async def publish_file(
+    async def add_file(
         self, user: User, model: JupyterContentsModel
     ) -> PublishedFileMetadata:
         path = model.path
@@ -206,16 +198,16 @@ class PublishingServiceClient(LoggingConfigurable):
         model = PublishedFileMetadata.parse_obj(obj)
         return model
 
-    async def remove_file(self, user: User, model: PublishedFileIdentifier) -> None:
+    async def delete_file(self, user: User, model: PublishedFileIdentifier) -> None:
         response = await self._request(user, f"/sharing/{model.id}", method="DELETE")
         return response
 
-    async def preview_file(
-        self, user: User, model: PublishedFileIdentifier, view="full"
-    ) -> dict:
-        response = await self._request(user, f"/sharing/{model.id}/preview?view={view}")
-        obj: dict = json.loads(response.body)
-        return obj
+    # async def preview_file(
+    #     self, user: User, model: PublishedFileIdentifier, view="full"
+    # ) -> dict:
+    #     response = await self._request(user, f"/sharing/{model.id}/preview?view={view}")
+    #     obj: dict = json.loads(response.body)
+    #     return obj
 
     # async def download_file(self, user: User, model: PublishedFileIdentifier) -> None:
     #     """Download a file from the Sharing Service to this Jupyter Server."""

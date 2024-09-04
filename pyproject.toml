@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "hatchling>=1.4.0",
-    "jupyterlab>=3.4.7,<4.0.0",
+    "jupyterlab>=3.4.7,<4.2.0",
     "hatch-nodejs-version",
 ]
 build-backend = "hatchling.build"
@@ -69,11 +69,13 @@ skip-if-exists = ["jupyter_sharing/labextension/static/style.js"]
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
 npm = ["jlpm"]
+source_dir = "packages"
+build_dir = "jupyter_sharing/labextension"
 
 [tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
-build_cmd = "install:extension"
+build_cmd = "build"
 npm = ["jlpm"]
-source_dir = "src"
+source_dir = "packages"
 build_dir = "jupyter_sharing/labextension"
 
 [tool.jupyter-releaser.options]
